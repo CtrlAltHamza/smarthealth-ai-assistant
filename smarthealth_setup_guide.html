@@ -1,0 +1,552 @@
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-sans); color: var(--color-text-primary); }
+
+.section { margin-bottom: 28px; }
+.section-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; border-radius: var(--border-radius-md);
+  margin-bottom: 12px; border-left: 3px solid;
+}
+.section-header.blue  { background: rgba(56,130,221,0.08); border-color: #378ADD; }
+.section-header.teal  { background: rgba(29,158,117,0.08); border-color: #1D9E75; }
+.section-header.amber { background: rgba(186,117,23,0.08); border-color: #BA7517; }
+.section-header.purple{ background: rgba(83,74,183,0.08);  border-color: #534AB7; }
+.section-header.coral { background: rgba(216,90,48,0.08);  border-color: #D85A30; }
+.section-header.gray  { background: rgba(95,94,90,0.08);   border-color: #5F5E5A; }
+
+.section-title { font-size: 15px; font-weight: 500; }
+.section-num {
+  width: 24px; height: 24px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 500; flex-shrink: 0;
+  background: var(--color-background-secondary);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border-secondary);
+}
+
+.steps { display: flex; flex-direction: column; gap: 8px; padding: 0 4px; }
+.step {
+  border-radius: var(--border-radius-md);
+  border: 1px solid var(--color-border-tertiary);
+  overflow: hidden;
+}
+.step-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; cursor: pointer;
+  transition: background 0.15s;
+}
+.step-header:hover { background: var(--color-background-secondary); }
+.step-label { font-size: 13px; font-weight: 500; flex: 1; }
+.step-badge {
+  font-size: 11px; padding: 2px 8px; border-radius: 999px;
+  font-weight: 500;
+}
+.badge-req  { background: rgba(216,90,48,0.12); color: #D85A30; }
+.badge-opt  { background: rgba(95,94,90,0.12);  color: var(--color-text-secondary); }
+.badge-free { background: rgba(29,158,117,0.12); color: #1D9E75; }
+
+.step-body { display: none; padding: 12px 14px 14px; border-top: 1px solid var(--color-border-tertiary); }
+.step.open .step-body { display: block; }
+.chevron { font-size: 11px; color: var(--color-text-secondary); transition: transform 0.2s; }
+.step.open .chevron { transform: rotate(90deg); }
+
+.cmd-block {
+  background: var(--color-background-tertiary);
+  border: 1px solid var(--color-border-tertiary);
+  border-radius: var(--border-radius-md);
+  padding: 10px 14px;
+  margin: 8px 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--color-text-primary);
+  line-height: 1.7;
+  position: relative;
+}
+.cmd-block .comment { color: var(--color-text-tertiary); }
+.copy-btn {
+  position: absolute; top: 6px; right: 8px;
+  font-size: 11px; padding: 3px 8px;
+  border-radius: 4px; cursor: pointer;
+  background: var(--color-background-secondary);
+  border: 1px solid var(--color-border-secondary);
+  color: var(--color-text-secondary);
+  font-family: var(--font-sans);
+}
+.copy-btn:hover { color: var(--color-text-primary); }
+
+.tip {
+  font-size: 12px; color: var(--color-text-secondary);
+  padding: 8px 12px; border-radius: var(--border-radius-md);
+  background: var(--color-background-secondary);
+  margin-top: 8px; line-height: 1.6;
+}
+.tip strong { color: var(--color-text-primary); }
+
+.link { color: #378ADD; text-decoration: none; font-size: 12px; }
+.link:hover { text-decoration: underline; }
+
+.tag-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.tag {
+  font-size: 11px; padding: 3px 10px; border-radius: 999px;
+  background: var(--color-background-secondary);
+  border: 1px solid var(--color-border-tertiary);
+  color: var(--color-text-secondary);
+}
+
+.split { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px; }
+.split-card {
+  padding: 10px 12px; border-radius: var(--border-radius-md);
+  border: 1px solid var(--color-border-tertiary);
+  background: var(--color-background-secondary);
+  font-size: 12px; line-height: 1.6;
+}
+.split-card strong { font-size: 13px; display: block; margin-bottom: 4px; font-weight: 500; }
+
+.divider { height: 1px; background: var(--color-border-tertiary); margin: 20px 0; }
+</style>
+
+<div style="padding: 4px 0 20px;">
+  <div style="font-size:18px;font-weight:500;margin-bottom:4px;">SmartHealth — Local Setup Guide</div>
+  <div style="font-size:13px;color:var(--color-text-secondary);">VS Code + Backend + GitHub + Jira · Step by step</div>
+</div>
+
+<!-- SECTION 1: Prerequisites -->
+<div class="section">
+  <div class="section-header blue">
+    <div class="section-num">1</div>
+    <div class="section-title">Install prerequisites on your PC</div>
+  </div>
+  <div class="steps">
+
+    <div class="step" id="s1">
+      <div class="step-header" onclick="toggle('s1')">
+        <div class="step-label">Node.js 20 LTS</div>
+        <span class="step-badge badge-req">required</span>
+        <span class="chevron">▶</span>
+      </div>
+      <div class="step-body">
+        <div>Download from <a class="link" href="https://nodejs.org" onclick="openLink('https://nodejs.org')">nodejs.org</a> → choose <strong>20 LTS</strong>. Installs <code>node</code> and <code>npm</code> together.</div>
+        <div class="cmd-block">node -v  <span class="comment"># should show v20.x.x</span>
+npm -v   <span class="comment"># should show 10.x.x</span></div>
+      </div>
+    </div>
+
+    <div class="step" id="s2">
+      <div class="step-header" onclick="toggle('s2')">
+        <div class="step-label">Python 3.11</div>
+        <span class="step-badge badge-req">required (AI service)</span>
+        <span class="chevron">▶</span>
+      </div>
+      <div class="step-body">
+        <div>Download from <a class="link" href="https://python.org" onclick="openLink('https://python.org')">python.org</a>. During install: ✅ check "Add Python to PATH".</div>
+        <div class="cmd-block">python --version  <span class="comment"># should show 3.11.x</span></div>
+        <div class="tip">On Windows, you may need to use <strong>python3</strong> instead of <strong>python</strong>.</div>
+      </div>
+    </div>
+
+    <div class="step" id="s3">
+      <div class="step-header" onclick="toggle('s3')">
+        <div class="step-label">PostgreSQL 15</div>
+        <span class="step-badge badge-req">required (database)</span>
+        <span class="chevron">▶</span>
+      </div>
+      <div class="step-body">
+        <div>Download from <a class="link" href="https://www.postgresql.org/download/" onclick="openLink('https://www.postgresql.org/download/')">postgresql.org</a>. During install, set password to <code>postgres123</code> (matches the .env).</div>
+        <div class="cmd-block"><span class="comment"># After install, open pgAdmin or psql and create DB:</span>
+CREATE DATABASE smarthealth;</div>
+        <div class="tip">pgAdmin is a visual tool that installs alongside PostgreSQL — you can use it to view tables and run queries.</div>
+      </div>
+    </div>
+
+    <div class="step" id="s4">
+      <div class="step-header" onclick="toggle('s4')">
+        <div class="step-label">Git</div>
+        <span class="step-badge badge-req">required</span>
+        <span class="chevron">▶</span>
+      </div>
+      <div class="step-body">
+        <div>Download from <a class="link" href="https://git-scm.com" onclick="openLink('https://git-scm.com')">git-scm.com</a>. Accept all defaults during install.</div>
+        <div class="cmd-block">git --version</div>
+      </div>
+    </div>
+
+    <div class="step" id="s5">
+      <div class="step-header" onclick="toggle('s5')">
+        <div class="step-label">VS Code + extensions</div>
+        <span class="step-badge badge-req">required</span>
+        <span class="chevron">▶</span>
+      </div>
+      <div class="step-body">
+        <div>Download from <a class="link" href="https://code.visualstudio.com" onclick="openLink('https://code.visualstudio.com')">code.visualstudio.com</a>. Then install these extensions:</div>
+        <div class="tag-row">
+          <span class="tag">ESLint</span>
+          <span class="tag">Prettier</span>
+          <span class="tag">Python (Microsoft)</span>
+          <span class="tag">REST Client</span>
+          <span class="tag">GitLens</span>
+          <span class="tag">Thunder Client</span>
+          <span class="tag">ES7+ React Snippets</span>
+        </div>
+        <div class="tip">Open VS Code → press <strong>Ctrl+Shift+X</strong> to open Extensions panel → search each name above.</div>
+      </div>
+    </div>
+
+    <div class="step" id="s5b">
+      <div class="step-header" onclick="toggle('s5b')">
+        <div class="step-label">Docker Desktop (optional but recommended)</div>
+        <span class="step-badge badge-opt">optional</span>
+        <span class="chevron">▶</span>
+      </div>
+      <div class="step-body">
+        <div>Download from <a class="link" href="https://docker.com/products/docker-desktop" onclick="openLink('https://docker.com/products/docker-desktop')">docker.com</a>. Lets you run all 5 services with one command instead of manually starting each one.</div>
+        <div class="cmd-block"><span class="comment"># One-command start (with Docker):</span>
+docker compose up --build</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- SECTION 2: Project setup -->
+<div class="section">
+  <div class="section-header teal">
+    <div class="section-num">2</div>
+    <div class="section-title">Open & configure the project in VS Code</div>
+  </div>
+  <div class="steps">
+
+    <div class="step" id="s6">
+      <div class="step-header" onclick="toggle('s6')">
+        <div class="step-label">Unzip and open in VS Code</div>
+        <span class="step-badge badge-req">first thing</span>
+        <span class="chevron">▶</span>
+      </div>
+      <div class="step-body">
+        <div>Extract the zip you downloaded. Then in VS Code: <strong>File → Open Folder</strong> → select the <code>smarthealth</code> folder.</div>
+        <div class="cmd-block"><span class="comment"># Or from terminal:</span>
+cd smarthealth
+code .</div>
+        <div class="tip">You should see <strong>frontend/</strong>, <strong>backend/</strong>, <strong>ai-service/</strong> in the file explorer sidebar.</div>
+      </div>
+    </div>
+
+    <div class="step" id="s7">
+      <div class="step-header" onclick="toggle('s7')">
+        <div class="step-label">Create the .env file</div>
+        <span class="step-badge badge-req">required</span>
+        <span class="chevron">▶</span>
+      </div>
+      <div class="step-body">
+        <div>Copy the example env file and edit it:</div>
+        <div class="cmd-block"><span class="comment"># In the project root:</span>
+cp .env.example .env</div>
+        <div class="tip">Open <code>.env</code> and make sure <strong>DB_PASSWORD</strong> matches what you set in PostgreSQL. Leave everything else as-is for local dev.</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- SECTION 3: Run backend -->
+<div class="section">
+  <div class="section-header amber">
+    <div class="section-num">3</div>
+    <div class="section-title">Run the backend (Node.js)</div>
+  </div>
+  <div class="steps">
+
+    <div class="step open" id="s8">
+      <div class="step-header" onclick="toggle('s8')">
+        <div class="step-label">Install & start the backend</div>
+        <span class="step-badge badge-req">terminal 1</span>
+        <span class="chevron">▶</span>
+      </div>
+      <div class="step-body">
+        <div>Open a terminal in VS Code (<strong>Ctrl+`</strong>), then:</div>
+        <div class="cmd-block"><button class="copy-btn" onclick="copyText('cd backend\nnpm install\nnpm run dev')">copy</button>cd backend
+npm install           <span class="comment"># installs all packages (~2 min)</span>
+npm run dev           <span class="comment"># starts server on :5000</span></div>
+        <div class="tip">You should see: <strong>"Database connected successfully"</strong> and <strong>"Server running on port 5000"</strong>. If you see a DB error, check PostgreSQL is running and your .env password matches.</div>
+        <div class="cmd-block"><span class="comment"># Test it's working:</span>
+<span class="comment"># Open browser → http://localhost:5000/api/health</span>
+<span class="comment"># Should show: {"status":"OK",...}</span>
+<span class="comment"># Swagger docs → http://localhost:5000/api/docs</span></div>
+      </div>
+    </div>
+
+    <div class="step" id="s9">
+      <div class="step-header" onclick="toggle('s9')">
+        <div class="step-label">Run DB migrations (first time only)</div>
+        <span class="step-badge badge-req">first time only</span>
+        <span class="chevron">▶</span>
+      </div>
+      <div class="step-body">
+        <div>This creates all the database tables:</div>
+        <div class="cmd-block"><button class="copy-btn" onclick="copyText('cd backend\nnpx sequelize-cli db:migrate')">copy</button>cd backend
+npx sequelize-cli db:migrate    <span class="comment"># creates tables</span>
+npx sequelize-cli db:seed:all   <span class="comment"># adds demo data (optional)</span></div>
+        <div class="tip">The demo seed creates the 3 test accounts: <strong>patient@demo.com</strong>, <strong>doctor@demo.com</strong>, <strong>admin@demo.com</strong> — all with password <strong>Demo1234!</strong></div>
+      </div>
+    </div>
+
+    <div class="step" id="s10">
+      <div class="step-header" onclick="toggle('s10')">
+        <div class="step-label">Run the frontend</div>
+        <span class="step-badge badge-req">terminal 2</span>
+        <span class="chevron">▶</span>
+      </div>
+      <div class="step-body">
+        <div>Open a <strong>new</strong> terminal tab (click <strong>+</strong> in VS Code terminal):</div>
+        <div class="cmd-block"><button class="copy-btn" onclick="copyText('cd frontend\nnpm install\nnpm start')">copy</button>cd frontend
+npm install   <span class="comment"># ~3 min first time</span>
+npm start     <span class="comment"># opens http://localhost:3000 in browser</span></div>
+      </div>
+    </div>
+
+    <div class="step" id="s11">
+      <div class="step-header" onclick="toggle('s11')">
+        <div class="step-label">Run the AI service (Python)</div>
+        <span class="step-badge badge-opt">terminal 3</span>
+        <span class="chevron">▶</span>
+      </div>
+      <div class="step-body">
+        <div>Open a <strong>third</strong> terminal tab:</div>
+        <div class="cmd-block"><button class="copy-btn" onclick="copyText('cd ai-service\npython -m venv venv\nvenv\\Scripts\\activate\npip install -r requirements.txt\npython -m spacy download en_core_web_sm\nuvicorn main:app --reload --port 8000')">copy</button>cd ai-service
+python -m venv venv                       <span class="comment"># create virtual env</span>
+venv\Scripts\activate                     <span class="comment"># Windows (use source venv/bin/activate on Mac)</span>
+pip install -r requirements.txt           <span class="comment"># installs FastAPI, spaCy etc.</span>
+python -m spacy download en_core_web_sm   <span class="comment"># downloads NLP model</span>
+uvicorn main:app --reload --port 8000     <span class="comment"># starts AI on :8000</span></div>
+        <div class="tip">AI docs at: <strong>http://localhost:8000/docs</strong>. The app works without the AI service running, but the symptom checker won't work.</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- SECTION 4: Kaggle/Colab for AI training -->
+<div class="section">
+  <div class="section-header purple">
+    <div class="section-num">4</div>
+    <div class="section-title">Kaggle / Google Colab for AI model training</div>
+  </div>
+  <div class="steps">
+
+    <div class="step" id="s12">
+      <div class="step-header" onclick="toggle('s12')">
+        <div class="step-label">Use Kaggle for dataset + training (recommended)</div>
+        <span class="step-badge badge-free">free GPU</span>
+        <span class="chevron">▶</span>
+      </div>
+      <div class="step-body">
+        <div>The AI model needs a symptom-disease dataset. Kaggle has exactly this — free to use with free GPU.</div>
+        <div class="split">
+          <div class="split-card">
+            <strong>Step 1 — Get dataset</strong>
+            Go to <a class="link" href="https://www.kaggle.com/datasets/itachi9604/disease-symptom-description-dataset" onclick="openLink('https://www.kaggle.com/datasets/itachi9604/disease-symptom-description-dataset')">kaggle.com → "Disease Symptom Dataset"</a>. Download <code>dataset.csv</code>.
+          </div>
+          <div class="split-card">
+            <strong>Step 2 — Train on Kaggle</strong>
+            Create a new Notebook on Kaggle, upload the CSV, run the training code (I'll generate this for you as Sprint 4).
+          </div>
+        </div>
+        <div class="tip">Kaggle gives you <strong>30h/week free GPU</strong>. Training the Random Forest model takes ~5 minutes. Download the resulting <code>rf_model.pkl</code> and put it in <code>ai-service/models/</code>.</div>
+      </div>
+    </div>
+
+    <div class="step" id="s13">
+      <div class="step-header" onclick="toggle('s13')">
+        <div class="step-label">Or use Google Colab (alternative)</div>
+        <span class="step-badge badge-free">free</span>
+        <span class="chevron">▶</span>
+      </div>
+      <div class="step-body">
+        <div>Open <a class="link" href="https://colab.research.google.com" onclick="openLink('https://colab.research.google.com')">colab.research.google.com</a> → New notebook. Same process — upload dataset, train, download <code>.pkl</code>.</div>
+        <div class="tip"><strong>Colab</strong> = better for quick experiments. <strong>Kaggle</strong> = better for structured notebooks that stay saved and shareable with supervisor.</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- SECTION 5: GitHub -->
+<div class="section">
+  <div class="section-header coral">
+    <div class="section-num">5</div>
+    <div class="section-title">GitHub setup & commits</div>
+  </div>
+  <div class="steps">
+
+    <div class="step" id="s14">
+      <div class="step-header" onclick="toggle('s14')">
+        <div class="step-label">Create repo & push initial code</div>
+        <span class="step-badge badge-req">one-time setup</span>
+        <span class="chevron">▶</span>
+      </div>
+      <div class="step-body">
+        <div>Go to <a class="link" href="https://github.com/new" onclick="openLink('https://github.com/new')">github.com/new</a> → name it <code>smarthealth-ai-assistant</code> → Private → Create. Then:</div>
+        <div class="cmd-block"><button class="copy-btn" onclick="copyText('cd smarthealth\ngit init\ngit add .\ngit commit -m \"feat: Sprint 1 - project scaffold, backend API, AI service, frontend shell\"\ngit branch -M main\ngit remote add origin https://github.com/YOUR_USERNAME/smarthealth-ai-assistant.git\ngit push -u origin main')">copy</button>cd smarthealth
+git init
+git add .
+git commit -m "feat: Sprint 1 - project scaffold, backend API, AI service, frontend shell"
+git branch -M main
+git remote add origin https://github.com/YOUR_USERNAME/smarthealth-ai-assistant.git
+git push -u origin main</div>
+      </div>
+    </div>
+
+    <div class="step" id="s15">
+      <div class="step-header" onclick="toggle('s15')">
+        <div class="step-label">Create branches for each sprint</div>
+        <span class="step-badge badge-req">team workflow</span>
+        <span class="chevron">▶</span>
+      </div>
+      <div class="step-body">
+        <div>Each team member works on their own branch, then merges via Pull Request:</div>
+        <div class="cmd-block"><span class="comment"># Create a branch for the feature you're working on:</span>
+git checkout -b feature/SHAI-12-auth-login
+
+<span class="comment"># After making changes:</span>
+git add .
+git commit -m "feat(auth): add JWT login endpoint SHAI-12"
+git push origin feature/SHAI-12-auth-login
+
+<span class="comment"># Then open a Pull Request on GitHub to merge into main</span></div>
+        <div class="tag-row">
+          <span class="tag">main branch = production</span>
+          <span class="tag">develop branch = integration</span>
+          <span class="tag">feature/* = your work</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="step" id="s16">
+      <div class="step-header" onclick="toggle('s16')">
+        <div class="step-label">Commit message convention (for Jira linking)</div>
+        <span class="step-badge badge-req">important for marks</span>
+        <span class="chevron">▶</span>
+      </div>
+      <div class="step-body">
+        <div>Include the Jira ticket number in every commit — this auto-links commits to tickets:</div>
+        <div class="cmd-block">git commit -m "feat(auth): implement JWT register endpoint SHAI-5"
+git commit -m "fix(db): fix patient model FK constraint SHAI-8"
+git commit -m "feat(ai): add symptom NLP pipeline SHAI-15"
+git commit -m "test(auth): add login unit tests SHAI-6"
+git commit -m "docs: update README with setup guide SHAI-3"</div>
+        <div class="tip">Format: <strong>type(scope): message TICKET-ID</strong>. Types: feat, fix, test, docs, chore, refactor. This creates a full audit trail your supervisor can see.</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- SECTION 6: Jira -->
+<div class="section">
+  <div class="section-header gray">
+    <div class="section-num">6</div>
+    <div class="section-title">Jira setup (Scrum board)</div>
+  </div>
+  <div class="steps">
+
+    <div class="step open" id="s17">
+      <div class="step-header" onclick="toggle('s17')">
+        <div class="step-label">Create project & configure board</div>
+        <span class="step-badge badge-free">free plan</span>
+        <span class="chevron">▶</span>
+      </div>
+      <div class="step-body">
+        <div>Go to <a class="link" href="https://www.atlassian.com/software/jira/free" onclick="openLink('https://www.atlassian.com/software/jira/free')">atlassian.com/jira/free</a> → sign up free (up to 10 users).</div>
+        <div class="cmd-block"><span class="comment">Project settings:</span>
+Project type:  Scrum
+Project name:  SmartHealth AI Assistant
+Project key:   SHAI
+Board name:    Sprint Board</div>
+        <div class="split" style="margin-top:10px;">
+          <div class="split-card">
+            <strong>Workflow statuses</strong>
+            Backlog → Selected for Dev → In Progress → Code Review → Testing → Blocked → Ready for Deploy → Done
+          </div>
+          <div class="split-card">
+            <strong>Create 3 team members</strong>
+            Invite your teammates by email. Assign roles: Backend Lead, Frontend Lead, AI/ML Lead.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="step" id="s18">
+      <div class="step-header" onclick="toggle('s18')">
+        <div class="step-label">Create Epics</div>
+        <span class="step-badge badge-req">do this first</span>
+        <span class="chevron">▶</span>
+      </div>
+      <div class="step-body">
+        <div>In Jira: Backlog → Create Epic for each module. Use these exact names:</div>
+        <div class="tag-row">
+          <span class="tag">SHAI-E1 Project Setup</span>
+          <span class="tag">SHAI-E2 Authentication</span>
+          <span class="tag">SHAI-E3 Frontend UI</span>
+          <span class="tag">SHAI-E4 Backend APIs</span>
+          <span class="tag">SHAI-E5 Database</span>
+          <span class="tag">SHAI-E6 AI Symptom Analysis</span>
+          <span class="tag">SHAI-E7 Disease Prediction</span>
+          <span class="tag">SHAI-E8 Appointments</span>
+          <span class="tag">SHAI-E9 Dashboard</span>
+          <span class="tag">SHAI-E10 Testing & QA</span>
+          <span class="tag">SHAI-E11 DevOps</span>
+          <span class="tag">SHAI-E12 Documentation</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="step" id="s19">
+      <div class="step-header" onclick="toggle('s19')">
+        <div class="step-label">Create Sprint 1 stories & start</div>
+        <span class="step-badge badge-req">sprint kickoff</span>
+        <span class="chevron">▶</span>
+      </div>
+      <div class="step-body">
+        <div>Create a Sprint called <strong>"Sprint 1 — Setup & Architecture"</strong>. Add these user stories to it:</div>
+        <div class="cmd-block"><span class="comment">User stories for Sprint 1 (copy these into Jira):</span>
+SHAI-1  As a dev, I can clone the repo and run the project locally         (3 pts)
+SHAI-2  As a dev, Docker Compose starts all services in one command        (5 pts)
+SHAI-3  GitHub repo created with branch strategy and CI/CD configured      (3 pts)
+SHAI-4  Database schema designed and all Sequelize models created          (8 pts)
+SHAI-5  As a patient, I can register with email and password               (5 pts)
+SHAI-6  As a user, I can login and receive a JWT token                     (5 pts)
+SHAI-7  API documentation available at /api/docs via Swagger               (3 pts)</div>
+        <div class="tip">Click <strong>"Start Sprint"</strong> → set 2-week duration. Move each story through the workflow as you work on them. Your supervisor will see the burndown chart update in real time.</div>
+      </div>
+    </div>
+
+    <div class="step" id="s20">
+      <div class="step-header" onclick="toggle('s20')">
+        <div class="step-label">Link GitHub to Jira</div>
+        <span class="step-badge badge-opt">bonus marks</span>
+        <span class="chevron">▶</span>
+      </div>
+      <div class="step-body">
+        <div>In Jira: <strong>Project Settings → GitHub → Connect Repository</strong>. Once linked, any commit message containing <code>SHAI-5</code> auto-appears inside that Jira ticket — your supervisor sees the exact code change tied to the story.</div>
+        <div class="tip">This is what makes your project look genuinely professional. It creates a full traceability chain: requirement → story → commit → test.</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="divider"></div>
+<div style="text-align:center; font-size:12px; color:var(--color-text-tertiary); padding-bottom:8px;">
+  All 3 services running? Backend :5000 · Frontend :3000 · AI :8000 · Swagger /api/docs
+</div>
+
+<script>
+function toggle(id) {
+  const el = document.getElementById(id);
+  el.classList.toggle('open');
+}
+function copyText(text) {
+  navigator.clipboard?.writeText(text).catch(()=>{});
+}
+</script>

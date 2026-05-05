@@ -1,0 +1,4 @@
+CREATE DATABASE smarthealth
+  WITH ENCODING 'UTF8'
+  LOCALE_PROVIDER 'libc'
+  LOCALE 'C';
