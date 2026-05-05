@@ -13,6 +13,9 @@ const SymptomCheckerPage = React.lazy(() => import("./pages/SymptomCheckerPage")
 const DoctorsPage = React.lazy(() => import("./pages/DoctorsPage"));
 const ProfilePage = React.lazy(() => import("./pages/ProfilePage"));
 const AdminPage = React.lazy(() => import("./pages/AdminPage"));
+const VerifyEmailPage = React.lazy(() => import("./pages/VerifyEmailPage"));
+const ResetPasswordPage = React.lazy(() => import("./pages/ResetPasswordPage"));
+const BookAppointmentPage = React.lazy(() => import("./pages/BookAppointmentPage"));
 
 // Layout
 import MainLayout from "./components/common/MainLayout";
@@ -31,13 +34,19 @@ export default function App() {
       <BrowserRouter>
         <React.Suspense fallback={<Spinner />}>
           <Routes>
+            {/* Public Routes */}
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
+            <Route path="/verify-email" element={<VerifyEmailPage />} />
+            <Route path="/reset-password" element={<ResetPasswordPage />} />
+            
+            {/* Protected Routes */}
             <Route element={<ProtectedRoute />}>
               <Route element={<MainLayout />}>
                 <Route path="/" element={<Navigate to="/dashboard" replace />} />
                 <Route path="/dashboard" element={<DashboardPage />} />
                 <Route path="/appointments" element={<AppointmentsPage />} />
+                <Route path="/book-appointment" element={<BookAppointmentPage />} />
                 <Route path="/symptom-checker" element={<SymptomCheckerPage />} />
                 <Route path="/doctors" element={<DoctorsPage />} />
                 <Route path="/profile" element={<ProfilePage />} />
