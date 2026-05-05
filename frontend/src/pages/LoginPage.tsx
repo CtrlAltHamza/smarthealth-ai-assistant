@@ -63,6 +63,16 @@ export default function LoginPage() {
             Don't have an account?{" "}
             <Link to="/register" style={{ color:"var(--accent-primary)", textDecoration:"none", fontWeight:500 }}>Create one</Link>
           </div>
+
+          {/* Quick action links */}
+          <div style={{ display:"flex", gap:10, marginTop:16, flexWrap:"wrap", justifyContent:"center" }}>
+            <Link to="/verify-email" style={{ fontSize:12, color:"var(--accent-primary)", textDecoration:"none", padding:"6px 10px", borderRadius:"6px", border:"1px solid var(--border)", hover:"background-color" }}>
+              Verify Email
+            </Link>
+            <Link to="/reset-password" style={{ fontSize:12, color:"var(--accent-primary)", textDecoration:"none", padding:"6px 10px", borderRadius:"6px", border:"1px solid var(--border)" }}>
+              Forgot Password?
+            </Link>
+          </div>
         </div>
 
         {/* Demo credentials */}

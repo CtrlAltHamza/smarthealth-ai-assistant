@@ -77,7 +77,7 @@ export default function DashboardPage() {
             <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
               {[
                 { href:"/symptom-checker", icon:"🔬", label:"Check Symptoms",    desc:"AI-powered analysis",    color:"56,189,248" },
-                { href:"/appointments",    icon:"📅", label:"Book Appointment",  desc:"Find available slots",  color:"52,211,153" },
+                { href:"/book-appointment", icon:"✅", label:"Book Appointment",  desc:"Schedule a consultation", color:"251,146,60" },
                 { href:"/doctors",         icon:"👨‍⚕️", label:"Browse Doctors",   desc:"500+ specialists",      color:"129,140,248" },
               ].map(({ href, icon, label, desc, color }) => (
                 <a key={href} href={href} style={{
