@@ -46,6 +46,7 @@ app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
 app.use("/api/auth",         require("./routes/auth.routes"));
+app.use("/api/email",        require("./routes/email.routes"));
 app.use("/api/users",        require("./routes/user.routes"));
 app.use("/api/patients",     require("./routes/patient.routes"));
 app.use("/api/doctors",      require("./routes/doctor.routes"));

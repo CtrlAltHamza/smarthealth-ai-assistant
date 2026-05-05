@@ -20,6 +20,10 @@ const User = sequelize.define("User", {
   isVerified: { type: DataTypes.BOOLEAN, defaultValue: false },
   lastLogin: { type: DataTypes.DATE },
   refreshToken: { type: DataTypes.TEXT },
+  verificationToken: { type: DataTypes.STRING },
+  verificationTokenExpiry: { type: DataTypes.DATE },
+  resetPasswordToken: { type: DataTypes.STRING },
+  resetPasswordTokenExpiry: { type: DataTypes.DATE },
 }, { tableName: "users", timestamps: true, paranoid: true });
 
 const Patient = sequelize.define("Patient", {
