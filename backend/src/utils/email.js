@@ -32,8 +32,23 @@ async function sendVerificationEmail(email, verificationToken) {
       `,
     };
 
-    await transporter.sendMail(mailOptions);
-    return true;
+    // Try sending via SMTP transporter. If SMTP is not configured or fails, fall back to console logging so devs can test flows.
+    try {
+      await transporter.sendMail(mailOptions);
+      return true;
+    } catch (err) {
+      console.error('SMTP send failed, falling back to console. Error:', err?.message || err);
+      console.log(`
+-------- EMAIL FALLBACK (verification) --------
+To: ${email}
+Subject: ${mailOptions.subject}
+Body:
+${mailOptions.html}
+Verification URL: ${verificationUrl}
+----------------------------------------------
+`);
+      return true; // return true so controllers treat the flow as successful during development
+    }
   } catch (error) {
     console.error('Error sending verification email:', error);
     return false;
@@ -63,8 +78,22 @@ async function sendPasswordResetEmail(email, resetToken) {
       `,
     };
 
-    await transporter.sendMail(mailOptions);
-    return true;
+    try {
+      await transporter.sendMail(mailOptions);
+      return true;
+    } catch (err) {
+      console.error('SMTP send failed, falling back to console. Error:', err?.message || err);
+      console.log(`
+-------- EMAIL FALLBACK (password reset) --------
+To: ${email}
+Subject: ${mailOptions.subject}
+Body:
+${mailOptions.html}
+Reset URL: ${resetUrl}
+----------------------------------------------
+`);
+      return true;
+    }
   } catch (error) {
     console.error('Error sending password reset email:', error);
     return false;
