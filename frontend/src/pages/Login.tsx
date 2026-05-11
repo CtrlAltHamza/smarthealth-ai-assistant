@@ -1,17 +1,22 @@
 import React, { useState } from 'react';
-import { Box, Button, TextField, Typography, Link as MuiLink } from '@mui/material';
+import { Box, TextField, Typography, Link as MuiLink, Alert, CircularProgress } from '@mui/material';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { setCredentials } from '../store/authSlice';
+import { HealthAndSafety, ArrowForward } from '@mui/icons-material';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
+    setError('');
     try {
       const response = await fetch('http://localhost:5000/api/auth/login', {
         method: 'POST',
@@ -25,23 +30,40 @@ const Login = () => {
         else if (data.data.user.role === 'Admin') navigate('/admin');
         else navigate('/dashboard');
       } else {
-        alert(data?.error?.message || data.message || 'Login failed');
+        setError(data?.error?.message || data.message || 'Login failed. Please check your credentials.');
       }
     } catch (error) {
       console.error('Login failed', error);
-      alert('Network error: Cannot reach the backend server. Make sure the backend is running on port 5000.');
+      setError('Network error: Cannot reach the backend server.');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
-      <Box className="glass-panel animate-fade-in" sx={{ p: 5, width: '100%', maxWidth: 400, textAlign: 'center' }}>
-        <Typography variant="h4" className="text-gradient" sx={{ mb: 1 }}>
-          Welcome Back
+    <Box sx={{ 
+      display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh',
+      background: 'radial-gradient(circle at 50% 50%, rgba(0, 112, 243, 0.05) 0%, transparent 70%)'
+    }}>
+      <Box className="glass-card animate-fade-in" sx={{ p: { xs: 4, md: 6 }, width: '100%', maxWidth: 450, textAlign: 'center' }}>
+        
+        <Box sx={{ 
+          background: 'linear-gradient(135deg, var(--primary), var(--secondary))',
+          width: 60, height: 60, borderRadius: '16px', mx: 'auto', mb: 3,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          boxShadow: '0 8px 20px var(--primary-glow)'
+        }}>
+          <HealthAndSafety sx={{ color: 'white', fontSize: 32 }} />
+        </Box>
+
+        <Typography variant="h3" sx={{ mb: 1, fontFamily: 'Outfit', fontWeight: 800 }}>
+          Welcome <span className="text-gradient">Back</span>
         </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 4 }}>
-          Sign in to access your health dashboard
+        <Typography variant="body1" sx={{ color: 'var(--text-muted)', mb: 4 }}>
+          Sign in to your intelligent health portal
         </Typography>
+
+        {error && <Alert severity="error" sx={{ mb: 3, borderRadius: '12px', textAlign: 'left' }}>{error}</Alert>}
 
         <form onSubmit={handleLogin}>
           <TextField
@@ -53,7 +75,13 @@ const Login = () => {
             onChange={(e) => setEmail(e.target.value)}
             required
             sx={{
-              '& .MuiInputLabel-root': { color: 'rgba(255,255,255,0.7)' },
+              '& .MuiOutlinedInput-root': {
+                borderRadius: '12px',
+                background: 'rgba(0,0,0,0.2)',
+                '& fieldset': { borderColor: 'var(--glass-border)' },
+                '&:hover fieldset': { borderColor: 'var(--primary)' },
+              },
+              '& .MuiInputLabel-root': { color: 'var(--text-dim)' },
               '& .MuiOutlinedInput-input': { color: 'white' }
             }}
           />
@@ -67,25 +95,30 @@ const Login = () => {
             onChange={(e) => setPassword(e.target.value)}
             required
             sx={{
-              '& .MuiInputLabel-root': { color: 'rgba(255,255,255,0.7)' },
+              '& .MuiOutlinedInput-root': {
+                borderRadius: '12px',
+                background: 'rgba(0,0,0,0.2)',
+                '& fieldset': { borderColor: 'var(--glass-border)' },
+                '&:hover fieldset': { borderColor: 'var(--primary)' },
+              },
+              '& .MuiInputLabel-root': { color: 'var(--text-dim)' },
               '& .MuiOutlinedInput-input': { color: 'white' }
             }}
           />
           
-          <Button
+          <button
             type="submit"
-            fullWidth
-            variant="contained"
-            color="primary"
-            sx={{ mt: 3, mb: 2, py: 1.5 }}
+            className="btn-premium"
+            disabled={loading}
+            style={{ width: '100%', marginTop: '24px', marginBottom: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
           >
-            Sign In
-          </Button>
+            {loading ? <CircularProgress size={24} color="inherit" /> : <><ArrowForward fontSize="small" /> Sign In</>}
+          </button>
 
-          <Typography variant="body2" color="text.secondary">
-            Don't have an account?{' '}
-            <MuiLink component={Link} to="/register" color="secondary">
-              Register here
+          <Typography variant="body2" sx={{ color: 'var(--text-muted)' }}>
+            New to SmartHealth?{' '}
+            <MuiLink component={Link} to="/register" sx={{ color: 'var(--primary)', fontWeight: 700, textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}>
+              Create Account
             </MuiLink>
           </Typography>
         </form>

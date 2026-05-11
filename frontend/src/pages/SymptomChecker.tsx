@@ -2,18 +2,21 @@ import { useState, useEffect } from 'react';
 import {
   Box, Typography, TextField, Button, Chip,
   FormGroup, FormControlLabel, Checkbox, Divider,
-  CircularProgress, Alert, Accordion, AccordionSummary,
-  AccordionDetails, List, ListItem, ListItemIcon, ListItemText
+  CircularProgress, Alert,
+  LinearProgress, Grid
 } from '@mui/material';
 import {
-  ExpandMore, CheckCircle, LocalHospital, Science,
-  Warning, Shield, MedicalServices, Timer
+  Science,
+  Warning, Shield, MedicalServices, Timer,
+  AutoAwesome, Psychology, HistoryEdu
 } from '@mui/icons-material';
 import { useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import type { RootState } from '../store';
 import { apiRequest } from '../api/client';
 
 const SymptomChecker = () => {
+  const navigate = useNavigate();
   const { user, token } = useSelector((state: RootState) => state.auth);
   const [symptomText, setSymptomText] = useState('');
   const [availableSymptoms, setAvailableSymptoms] = useState<string[]>([]);
@@ -42,10 +45,10 @@ const SymptomChecker = () => {
       });
       const record = data.record || data;
       setNlpResult(record);
-      // Also populate disease predictions from the NLP analysis response
-      if (record.predictions?.length > 0) {
-        setPredictions(record.predictions);
-        setRecommendedSpecialist(record.recommended_specialist || '');
+      const preds = record.predictions;
+      if (Array.isArray(preds) && preds.length > 0) {
+        setPredictions(preds);
+        setRecommendedSpecialist(record.recommended_specialist || record.recommendedSpecialist || '');
       }
     } catch (e: any) { setError(e.message || 'Network error: Backend not reachable.'); }
     finally { setNlpLoading(false); }
@@ -70,286 +73,229 @@ const SymptomChecker = () => {
   const toggleSymptom = (s: string) =>
     setSelectedSymptoms(prev => prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s]);
 
-  const confidenceColor = (c: number): 'error' | 'warning' | 'info' =>
-    c >= 60 ? 'error' : c >= 30 ? 'warning' : 'info';
-
-  const severityColor = (s: string) =>
-    s === 'high' ? 'error' : s === 'medium' ? 'warning' : 'success';
-
   return (
-    <Box sx={{ p: 4, minHeight: '100vh' }}>
-      <Typography variant="h3" className="text-gradient" sx={{ mb: 1 }}>
-        AI Symptom Checker
-      </Typography>
-      <Typography color="text.secondary" sx={{ mb: 4 }}>
-        Describe your symptoms in natural language and get a detailed AI diagnosis report
-      </Typography>
-
-      {error && <Alert severity="error" sx={{ mb: 3, maxWidth: 1100 }} onClose={() => setError('')}>{error}</Alert>}
-
-      {/* Input Row */}
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 4, alignItems: 'flex-start', mb: 5 }}>
-        {/* NLP Free Text */}
-        <Box className="glass-panel" sx={{ p: 4, flex: '1 1 380px' }}>
-          <Typography variant="h6" sx={{ mb: 2 }}>📝 Describe in Natural Language</Typography>
-          <TextField
-            fullWidth multiline rows={4}
-            placeholder="e.g. I have had a severe headache and high fever for 3 days with body aches and chills..."
-            value={symptomText}
-            onChange={e => setSymptomText(e.target.value)}
-            sx={{ mb: 3 }}
-          />
-          <Button variant="contained" color="secondary" onClick={handleNLPAnalyze}
-            disabled={nlpLoading || !symptomText} sx={{ color: '#000', px: 4 }}>
-            {nlpLoading ? <CircularProgress size={20} color="inherit" /> : '🔍 Analyze & Diagnose'}
-          </Button>
-
-          {nlpResult && (
-            <Box sx={{ mt: 3 }}>
-              <Divider sx={{ mb: 2, borderColor: 'rgba(255,255,255,0.1)' }} />
-              {nlpResult.extracted_symptoms?.length > 0 && (
-                <>
-                  <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
-                    Extracted symptom phrases:
-                  </Typography>
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
-                    {nlpResult.extracted_symptoms.map((s: string, i: number) => (
-                      <Chip key={i} label={s} variant="outlined" color="primary" size="small" />
-                    ))}
-                  </Box>
-                </>
-              )}
-              {nlpResult.matched_known_symptoms?.length > 0 && (
-                <>
-                  <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
-                    Matched to ML symptom database:
-                  </Typography>
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
-                    {nlpResult.matched_known_symptoms.map((s: string, i: number) => (
-                      <Chip key={i} label={s.replace(/_/g, ' ')} color="secondary" size="small" sx={{ color: '#000' }} />
-                    ))}
-                  </Box>
-                </>
-              )}
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Typography variant="subtitle2" color="text.secondary">Severity:</Typography>
-                <Chip
-                  label={(nlpResult.severity || 'low').toUpperCase()}
-                  color={severityColor(nlpResult.severity) as any}
-                />
-              </Box>
-              {nlpResult.follow_up_questions?.length > 0 && (
-                <Box sx={{ mt: 2, p: 2, background: 'rgba(0,112,243,0.08)', borderRadius: 2 }}>
-                  <Typography variant="subtitle2" sx={{ mb: 1, color: '#0070f3' }}>❓ Follow-up Questions:</Typography>
-                  {nlpResult.follow_up_questions.map((q: string, i: number) => (
-                    <Typography key={i} variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>• {q}</Typography>
-                  ))}
-                </Box>
-              )}
-            </Box>
-          )}
-        </Box>
-
-        {/* ML Symptom Picker */}
-        <Box className="glass-panel" sx={{ p: 4, flex: '1 1 380px' }}>
-          <Typography variant="h6" sx={{ mb: 2 }}>🧬 Disease Prediction Engine</Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Or manually select symptoms you are experiencing:
-          </Typography>
-          <Box sx={{ maxHeight: 250, overflowY: 'auto', mb: 3, pr: 1 }}>
-            <FormGroup>
-              {availableSymptoms.map(s => (
-                <FormControlLabel key={s}
-                  control={<Checkbox size="small" checked={selectedSymptoms.includes(s)} onChange={() => toggleSymptom(s)} sx={{ color: '#0070f3' }} />}
-                  label={<Typography variant="body2">{s.replace(/_/g, ' ')}</Typography>}
-                />
-              ))}
-            </FormGroup>
-          </Box>
-          <Box sx={{ display: 'flex', gap: 1, mb: 2, flexWrap: 'wrap' }}>
-            {selectedSymptoms.map(s => <Chip key={s} label={s.replace(/_/g, ' ')} onDelete={() => toggleSymptom(s)} size="small" color="primary" />)}
-          </Box>
-          <Button variant="contained" color="primary" onClick={handlePredict}
-            disabled={predLoading || selectedSymptoms.length === 0} sx={{ px: 4 }}>
-            {predLoading ? <CircularProgress size={20} color="inherit" /> : '🔮 Predict Disease'}
-          </Button>
-        </Box>
+    <Box sx={{ p: { xs: 2, md: 6 }, minHeight: '100vh', position: 'relative' }}>
+      
+      <Box sx={{ mb: 6 }} className="animate-fade-in">
+        <Typography variant="h2" sx={{ mb: 1, fontFamily: 'Outfit', fontWeight: 800 }}>
+          AI <span className="text-gradient">Diagnostic Engine</span>
+        </Typography>
+        <Typography sx={{ color: 'var(--text-muted)', fontSize: '1.1rem', maxWidth: 700 }}>
+          Advanced neural processing for symptom analysis. Describe your condition in natural 
+          language for a comprehensive clinical insight report.
+        </Typography>
       </Box>
 
-      {/* ─── Full Diagnosis Report ─── */}
+      {error && (
+        <Alert variant="filled" severity="error" sx={{ mb: 4, borderRadius: '12px', background: 'rgba(211, 47, 47, 0.9)' }} onClose={() => setError('')}>
+          {error}
+        </Alert>
+      )}
+
+      {/* Input Section */}
+      <Grid container spacing={4} sx={{ mb: 8 }}>
+        {/* NLP Free Text */}
+        <Grid size={{ xs: 12, lg: 7 }}>
+          <Box className="glass-card" sx={{ height: '100%', p: 4, border: '1px solid var(--primary-glow)' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+              <Psychology sx={{ color: 'var(--primary)', fontSize: 32 }} />
+              <Typography variant="h5" sx={{ fontWeight: 700, fontFamily: 'Outfit' }}>Neural Symptom Analysis</Typography>
+            </Box>
+            
+            <TextField
+              fullWidth multiline rows={5}
+              placeholder="e.g. I have had a severe headache and high fever for 3 days with body aches and chills..."
+              value={symptomText}
+              onChange={e => setSymptomText(e.target.value)}
+              sx={{ 
+                mb: 4,
+                '& .MuiOutlinedInput-root': {
+                  background: 'rgba(0,0,0,0.2)',
+                  borderRadius: '16px',
+                  color: 'white',
+                  '& fieldset': { borderColor: 'var(--glass-border)' },
+                  '&:hover fieldset': { borderColor: 'var(--primary)' },
+                }
+              }}
+            />
+
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+              <button 
+                className="btn-premium" 
+                onClick={handleNLPAnalyze}
+                disabled={nlpLoading || !symptomText}
+                style={{ minWidth: 200 }}
+              >
+                {nlpLoading ? <CircularProgress size={24} color="inherit" /> : <><AutoAwesome sx={{ mr: 1, fontSize: 20 }} /> Analyze Symptoms</>}
+              </button>
+              {nlpLoading && <Typography variant="body2" className="shimmer-bg" sx={{ color: 'var(--primary)', fontWeight: 600 }}>Engine is processing NLP data...</Typography>}
+            </Box>
+
+            {nlpResult && (
+              <Box sx={{ mt: 4 }} className="animate-fade-in">
+                <Divider sx={{ mb: 3, borderColor: 'var(--glass-border)' }} />
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
+                  <Box>
+                    <Typography variant="caption" sx={{ color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Detected Symptoms</Typography>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
+                      {(nlpResult.aiAnalysis || nlpResult.extracted_symptoms || []).map((s: string, i: number) => (
+                        <Chip key={i} label={s} size="small" sx={{ background: 'var(--glass-highlight)', color: 'white' }} />
+                      ))}
+                    </Box>
+                  </Box>
+                  <Box>
+                    <Typography variant="caption" sx={{ color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Clinical Severity</Typography>
+                    <Box sx={{ mt: 1 }}>
+                      <Chip 
+                        label={nlpResult.severity?.toUpperCase()} 
+                        size="small" 
+                        sx={{ fontWeight: 700, background: nlpResult.severity === 'high' ? 'rgba(255,0,0,0.2)' : 'rgba(0,255,0,0.1)', color: nlpResult.severity === 'high' ? '#ff6464' : '#00dfd8' }} 
+                      />
+                    </Box>
+                  </Box>
+                </Box>
+              </Box>
+            )}
+          </Box>
+        </Grid>
+
+        {/* Manual Picker */}
+        <Grid size={{ xs: 12, lg: 5 }}>
+          <Box className="glass-card" sx={{ height: '100%', p: 4 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+              <HistoryEdu sx={{ color: 'var(--accent)', fontSize: 32 }} />
+              <Typography variant="h5" sx={{ fontWeight: 700, fontFamily: 'Outfit' }}>Manual Assessment</Typography>
+            </Box>
+            
+            <Box sx={{ 
+              maxHeight: 280, 
+              overflowY: 'auto', 
+              mb: 4, 
+              pr: 1,
+              '&::-webkit-scrollbar-thumb': { background: 'var(--glass-border)' }
+            }}>
+              <FormGroup>
+                {availableSymptoms.map(s => (
+                  <FormControlLabel key={s}
+                    control={<Checkbox size="small" checked={selectedSymptoms.includes(s)} onChange={() => toggleSymptom(s)} sx={{ color: 'var(--primary)' }} />}
+                    label={<Typography variant="body2" sx={{ color: 'var(--text-muted)' }}>{s.replace(/_/g, ' ')}</Typography>}
+                  />
+                ))}
+              </FormGroup>
+            </Box>
+
+            <button 
+              className="btn-premium" 
+              onClick={handlePredict}
+              disabled={predLoading || selectedSymptoms.length === 0}
+              style={{ width: '100%', background: 'var(--bg-soft)', border: '1px solid var(--primary)', color: 'var(--primary)' }}
+            >
+              {predLoading ? <CircularProgress size={24} color="inherit" /> : 'Run Prediction Model'}
+            </button>
+          </Box>
+        </Grid>
+      </Grid>
+
+      {/* ─── Diagnostic Report ─── */}
       {predictions.length > 0 && (
-        <Box sx={{ maxWidth: 1100 }}>
-          <Typography variant="h4" sx={{ mb: 1, fontWeight: 700 }}>
-            🏥 AI Diagnosis Report
-          </Typography>
-          <Typography color="text.secondary" sx={{ mb: 1 }}>
-            Based on your symptoms, the AI has identified the following potential conditions:
-          </Typography>
+        <Box sx={{ maxWidth: 1000, mx: 'auto' }} className="animate-fade-in">
+          <Box sx={{ textAlign: 'center', mb: 6 }}>
+            <Typography variant="h3" sx={{ fontFamily: 'Outfit', fontWeight: 800, mb: 1 }}>
+              Clinical <span className="text-gradient">Diagnostic Report</span>
+            </Typography>
+            <Typography sx={{ color: 'var(--text-muted)' }}>Precision machine learning analysis based on reported clinical manifestations.</Typography>
+          </Box>
 
           {recommendedSpecialist && (
-            <Alert
-              severity="info"
-              icon={<MedicalServices />}
-              sx={{ mb: 3 }}
-            >
-              <strong>Recommended Specialist: {recommendedSpecialist}</strong> — Book an appointment through the Appointments page.
-            </Alert>
+            <Box sx={{ 
+              p: 3, mb: 5, borderRadius: '16px', 
+              background: 'linear-gradient(90deg, rgba(0,112,243,0.1), transparent)',
+              border: '1px solid var(--primary-glow)',
+              display: 'flex', alignItems: 'center', gap: 3
+            }}>
+              <MedicalServices sx={{ color: 'var(--primary)', fontSize: 40 }} />
+              <Box>
+                <Typography variant="h6" sx={{ fontWeight: 700 }}>Recommended Specialist: {recommendedSpecialist}</Typography>
+                <Typography variant="body2" sx={{ color: 'var(--text-muted)' }}>We recommend consulting a {recommendedSpecialist} for further physical evaluation.</Typography>
+              </Box>
+              <Button 
+                variant="contained" 
+                onClick={() => navigate('/appointments')}
+                sx={{ ml: 'auto', borderRadius: '12px', background: 'var(--primary)' }}
+              >
+                Book Appointment
+              </Button>
+            </Box>
           )}
 
           {predictions.map((p: any, i: number) => (
-            <Box key={i} sx={{
-              mb: 3,
-              borderRadius: 3,
-              border: i === 0 ? '1px solid rgba(0,112,243,0.4)' : '1px solid rgba(255,255,255,0.1)',
-              background: i === 0 ? 'rgba(0,112,243,0.06)' : 'rgba(255,255,255,0.03)',
-              overflow: 'hidden'
-            }}>
-              {/* Disease Header */}
-              <Box sx={{ p: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2 }}>
+            <Box key={i} className="glass-card" sx={{ mb: 4, p: 0, overflow: 'hidden' }}>
+              <Box sx={{ p: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 0.5 }}>
-                    {i === 0 && <Chip label="Most Likely" color="primary" size="small" />}
-                    <Typography variant="h5" sx={{ fontWeight: 700 }}>
-                      {i + 1}. {p.disease}
-                    </Typography>
-                    <Chip label={`${p.confidence}% confidence`} color={confidenceColor(p.confidence)} size="small" />
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1.5 }}>
+                    <Typography variant="h4" sx={{ fontWeight: 800, fontFamily: 'Outfit' }}>{p.disease}</Typography>
+                    <Chip label={`${p.confidence}% Confidence`} sx={{ background: i === 0 ? 'rgba(0,112,243,0.2)' : 'var(--bg-soft)', color: i === 0 ? 'var(--primary)' : 'var(--text-muted)', fontWeight: 700 }} />
                   </Box>
-                  {p.contagious !== undefined && (
-                    <Chip
-                      label={p.contagious ? '⚠️ Contagious' : '✅ Not Contagious'}
-                      variant="outlined"
-                      size="small"
-                      color={p.contagious ? 'warning' : 'success'}
-                      sx={{ mr: 1 }}
-                    />
-                  )}
-                  {p.recovery_time && (
-                    <Chip
-                      icon={<Timer fontSize="small" />}
-                      label={`Recovery: ${p.recovery_time}`}
-                      variant="outlined"
-                      size="small"
-                    />
-                  )}
+                  <Box sx={{ display: 'flex', gap: 1 }}>
+                    <Chip label={p.contagious ? 'Contagious' : 'Non-Contagious'} size="small" variant="outlined" color={p.contagious ? 'error' : 'success'} />
+                    <Chip icon={<Timer sx={{ fontSize: '1rem !important' }} />} label={p.recovery_time} size="small" variant="outlined" />
+                  </Box>
                 </Box>
                 <Box sx={{ textAlign: 'right' }}>
-                  <Typography variant="body2" color="text.secondary">Specialist</Typography>
-                  <Typography variant="body1" sx={{ fontWeight: 600, color: '#0070f3' }}>{p.specialist}</Typography>
+                  <Typography variant="caption" sx={{ color: 'var(--text-dim)', textTransform: 'uppercase' }}>Target Specialist</Typography>
+                  <Typography variant="h6" sx={{ fontWeight: 700, color: 'var(--accent)' }}>{p.specialist}</Typography>
                 </Box>
               </Box>
 
-              <Divider sx={{ borderColor: 'rgba(255,255,255,0.06)' }} />
+              <LinearProgress 
+                variant="determinate" 
+                value={p.confidence} 
+                sx={{ height: 4, background: 'rgba(255,255,255,0.05)', '& .MuiLinearProgress-bar': { background: 'linear-gradient(90deg, var(--primary), var(--accent))' } }} 
+              />
 
-              {/* Overview */}
-              {p.overview && (
-                <Box sx={{ p: 3, pb: 0 }}>
-                  <Typography variant="body1" color="text.secondary" sx={{ lineHeight: 1.8 }}>
-                    {p.overview}
-                  </Typography>
-                </Box>
-              )}
-
-              {/* Accordion Sections */}
-              <Box sx={{ p: 2 }}>
-                {p.causes?.length > 0 && (
-                  <Accordion sx={{ background: 'transparent', boxShadow: 'none', '&:before': { display: 'none' } }}>
-                    <AccordionSummary expandIcon={<ExpandMore />}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Science fontSize="small" color="warning" />
-                        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>Causes</Typography>
-                      </Box>
-                    </AccordionSummary>
-                    <AccordionDetails>
-                      <List dense disablePadding>
-                        {p.causes.map((c: string, ci: number) => (
-                          <ListItem key={ci} disableGutters>
-                            <ListItemIcon sx={{ minWidth: 28 }}><CheckCircle fontSize="small" color="warning" /></ListItemIcon>
-                            <ListItemText primary={<Typography variant="body2" color="text.secondary">{c}</Typography>} />
-                          </ListItem>
-                        ))}
-                      </List>
-                    </AccordionDetails>
-                  </Accordion>
-                )}
-
-                {p.key_symptoms?.length > 0 && (
-                  <Accordion sx={{ background: 'transparent', boxShadow: 'none', '&:before': { display: 'none' } }}>
-                    <AccordionSummary expandIcon={<ExpandMore />}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <LocalHospital fontSize="small" color="error" />
-                        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>Key Symptoms</Typography>
-                      </Box>
-                    </AccordionSummary>
-                    <AccordionDetails>
-                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                        {p.key_symptoms.map((s: string, si: number) => (
-                          <Chip key={si} label={s} variant="outlined" size="small" color="error" />
-                        ))}
-                      </Box>
-                    </AccordionDetails>
-                  </Accordion>
-                )}
-
-                {p.treatments?.length > 0 && (
-                  <Accordion sx={{ background: 'transparent', boxShadow: 'none', '&:before': { display: 'none' } }} defaultExpanded={i === 0}>
-                    <AccordionSummary expandIcon={<ExpandMore />}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <MedicalServices fontSize="small" color="primary" />
-                        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>Treatments</Typography>
-                      </Box>
-                    </AccordionSummary>
-                    <AccordionDetails>
-                      <List dense disablePadding>
-                        {p.treatments.map((t: string, ti: number) => (
-                          <ListItem key={ti} disableGutters>
-                            <ListItemIcon sx={{ minWidth: 28 }}><CheckCircle fontSize="small" color="primary" /></ListItemIcon>
-                            <ListItemText primary={<Typography variant="body2" color="text.secondary">{t}</Typography>} />
-                          </ListItem>
-                        ))}
-                      </List>
-                    </AccordionDetails>
-                  </Accordion>
-                )}
-
-                {p.prevention?.length > 0 && (
-                  <Accordion sx={{ background: 'transparent', boxShadow: 'none', '&:before': { display: 'none' } }}>
-                    <AccordionSummary expandIcon={<ExpandMore />}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Shield fontSize="small" color="success" />
-                        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>Prevention</Typography>
-                      </Box>
-                    </AccordionSummary>
-                    <AccordionDetails>
-                      <List dense disablePadding>
-                        {p.prevention.map((prev: string, pi: number) => (
-                          <ListItem key={pi} disableGutters>
-                            <ListItemIcon sx={{ minWidth: 28 }}><CheckCircle fontSize="small" color="success" /></ListItemIcon>
-                            <ListItemText primary={<Typography variant="body2" color="text.secondary">{prev}</Typography>} />
-                          </ListItem>
-                        ))}
-                      </List>
-                    </AccordionDetails>
-                  </Accordion>
-                )}
-
-                {p.when_to_see_doctor && (
-                  <Box sx={{ mt: 1, p: 2, background: 'rgba(255,100,100,0.08)', borderRadius: 2, border: '1px solid rgba(255,100,100,0.2)' }}>
-                    <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
-                      <Warning color="error" fontSize="small" sx={{ mt: 0.3, flexShrink: 0 }} />
-                      <Box>
-                        <Typography variant="subtitle2" sx={{ color: '#ff6464', mb: 0.5 }}>When to See a Doctor</Typography>
-                        <Typography variant="body2" color="text.secondary">{p.when_to_see_doctor}</Typography>
-                      </Box>
+              <Box sx={{ p: 4 }}>
+                <Typography sx={{ color: 'var(--text-muted)', lineHeight: 1.8, mb: 4 }}>{p.overview}</Typography>
+                
+                <Grid container spacing={4}>
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Science sx={{ fontSize: 18, color: 'var(--accent)' }} /> Potential Causes
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                      {p.causes?.map((c: string, ci: number) => (
+                        <Chip key={ci} label={c} size="small" variant="outlined" sx={{ borderColor: 'var(--glass-border)' }} />
+                      ))}
                     </Box>
-                  </Box>
-                )}
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Shield sx={{ fontSize: 18, color: 'var(--primary)' }} /> Preventive Actions
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                      {p.prevention?.map((prev: string, pi: number) => (
+                        <Chip key={pi} label={prev} size="small" variant="outlined" sx={{ borderColor: 'var(--glass-border)' }} />
+                      ))}
+                    </Box>
+                  </Grid>
+                </Grid>
+
+                <Box sx={{ mt: 5, p: 3, borderRadius: '12px', background: 'rgba(255,100,100,0.05)', border: '1px solid rgba(255,100,100,0.1)' }}>
+                  <Typography variant="subtitle2" sx={{ color: '#ff6464', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                    <Warning sx={{ fontSize: 18 }} /> Critical: When to See a Doctor
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: 'var(--text-muted)' }}>{p.when_to_see_doctor}</Typography>
+                </Box>
               </Box>
             </Box>
           ))}
 
-          <Alert severity="warning" icon={<Warning />} sx={{ mt: 2 }}>
-            <strong>Disclaimer:</strong> This AI report is for informational purposes only and does not constitute a medical diagnosis. Please consult a qualified healthcare professional before taking any action.
-          </Alert>
+          <Box sx={{ mt: 8, p: 4, textAlign: 'center', borderTop: '1px solid var(--glass-border)' }}>
+            <Typography variant="caption" sx={{ color: 'var(--text-dim)', maxWidth: 600, display: 'block', mx: 'auto' }}>
+              DISCLAIMER: The information provided by this AI system is for informational purposes only. 
+              It is not a substitute for professional medical advice, diagnosis, or treatment. 
+              Always seek the advice of your physician or other qualified health provider with any questions.
+            </Typography>
+          </Box>
         </Box>
       )}
     </Box>

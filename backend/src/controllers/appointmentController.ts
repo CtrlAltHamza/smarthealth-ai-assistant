@@ -1,8 +1,10 @@
 import { Request, Response } from 'express';
 import { Op } from 'sequelize';
+import sequelize from '../db';
 import { Appointment } from '../models/Appointment';
 import { User } from '../models/User';
 import { Profile } from '../models/Profile';
+import { DoctorReview } from '../models/DoctorReview';
 import { AuthRequest } from '../middleware/auth';
 import { fail, ok } from '../utils/http';
 import { asDate, asPositiveInt } from '../utils/validators';
@@ -50,6 +52,24 @@ export const bookAppointment = async (req: AuthRequest, res: Response) => {
       doctorId,
       appointmentDate: reqDate,
       notes: notes || '',
+    });
+
+    const io = req.app.get('io');
+    io?.emit('appointment_booked', {
+      patientId,
+      doctorId,
+      appointmentId: appointment.id,
+      appointmentDate: appointment.appointmentDate,
+    });
+    io?.to(`user:${patientId}`).emit('notification', {
+      type: 'appointment_booked',
+      title: 'Appointment confirmed',
+      message: 'Your visit has been scheduled. Check Appointments for details.',
+    });
+    io?.to(`user:${doctorId}`).emit('notification', {
+      type: 'appointment_booked',
+      title: 'New booking',
+      message: 'A patient booked an appointment with you.',
     });
 
     return ok(res, { message: 'Appointment booked successfully!', appointment }, 201);
@@ -100,10 +120,81 @@ export const cancelAppointment = async (req: AuthRequest, res: Response) => {
     }
     appointment.status = 'Cancelled';
     await appointment.save();
+
+    const io = req.app.get('io');
+    io?.emit('appointment_cancelled', { appointmentId, patientId: appointment.patientId, doctorId: appointment.doctorId });
+    io?.to(`user:${appointment.patientId}`).emit('notification', {
+      type: 'appointment_cancelled',
+      title: 'Appointment cancelled',
+      message: 'Your appointment has been cancelled.',
+    });
+    io?.to(`user:${appointment.doctorId}`).emit('notification', {
+      type: 'appointment_cancelled',
+      title: 'Appointment cancelled',
+      message: 'A patient cancelled a scheduled visit.',
+    });
+
     return ok(res, { message: 'Appointment cancelled successfully.', appointment });
   } catch (error) {
     console.error('Cancel Appointment Error:', error);
     return fail(res, 500, 'Server error cancelling appointment.');
+  }
+};
+
+export const rescheduleAppointment = async (req: AuthRequest, res: Response) => {
+  try {
+    const appointmentId = asPositiveInt(req.params.appointmentId);
+    const appointmentDate = asDate(req.body?.appointmentDate);
+    if (!appointmentId || !appointmentDate) {
+      return fail(res, 400, 'appointmentId and appointmentDate are required.');
+    }
+    const appointment = await Appointment.findByPk(appointmentId);
+    if (!appointment) {
+      return fail(res, 404, 'Appointment not found.');
+    }
+    if (req.user?.role === 'Patient' && appointment.patientId !== req.user.id) {
+      return fail(res, 403, 'You can only reschedule your own appointments.');
+    }
+    if (appointment.status !== 'Scheduled') {
+      return fail(res, 400, 'Only scheduled appointments can be rescheduled.');
+    }
+
+    const doctorId = appointment.doctorId;
+    const reqDate = appointmentDate;
+    const windowStart = new Date(reqDate.getTime() - 30 * 60 * 1000);
+    const windowEnd = new Date(reqDate.getTime() + 30 * 60 * 1000);
+
+    const conflict = await Appointment.findOne({
+      where: {
+        doctorId,
+        status: 'Scheduled',
+        id: { [Op.ne]: appointmentId },
+        appointmentDate: { [Op.between]: [windowStart, windowEnd] },
+      },
+    });
+    if (conflict) {
+      return fail(res, 409, 'Doctor is unavailable at this time. Please choose another slot.');
+    }
+
+    appointment.appointmentDate = reqDate;
+    await appointment.save();
+
+    const io = req.app.get('io');
+    io?.to(`user:${appointment.patientId}`).emit('notification', {
+      type: 'appointment_rescheduled',
+      title: 'Appointment updated',
+      message: 'Your visit time has been changed.',
+    });
+    io?.to(`user:${appointment.doctorId}`).emit('notification', {
+      type: 'appointment_rescheduled',
+      title: 'Schedule change',
+      message: 'A patient rescheduled an appointment.',
+    });
+
+    return ok(res, { message: 'Appointment rescheduled.', appointment });
+  } catch (error) {
+    console.error('Reschedule Error:', error);
+    return fail(res, 500, 'Server error rescheduling appointment.');
   }
 };
 
@@ -115,7 +206,41 @@ export const getDoctors = async (_req: Request, res: Response) => {
       attributes: ['id', 'email'],
       include: [{ model: Profile, attributes: ['firstName', 'lastName', 'contactNumber'] }],
     });
-    return ok(res, doctors);
+    const ids = doctors.map((d) => d.id);
+    if (ids.length === 0) {
+      return ok(res, []);
+    }
+    const stats = (await DoctorReview.findAll({
+      attributes: [
+        'doctorId',
+        [sequelize.fn('AVG', sequelize.col('rating')), 'avgRating'],
+        [sequelize.fn('COUNT', sequelize.col('DoctorReview.id')), 'reviewCount'],
+      ],
+      where: { doctorId: { [Op.in]: ids } },
+      group: ['doctorId'],
+      raw: true,
+    })) as unknown as { doctorId: number; avgRating: string; reviewCount: string }[];
+
+    const statMap = new Map(
+      stats.map((s) => [
+        s.doctorId,
+        {
+          avgRating: Math.round(Number(s.avgRating) * 10) / 10,
+          reviewCount: Number(s.reviewCount),
+        },
+      ])
+    );
+
+    const payload = doctors.map((d) => {
+      const plain = d.toJSON() as unknown as Record<string, unknown>;
+      const st = statMap.get(d.id);
+      return {
+        ...plain,
+        avgRating: st?.avgRating ?? 0,
+        reviewCount: st?.reviewCount ?? 0,
+      };
+    });
+    return ok(res, payload);
   } catch (error) {
     console.error('Get Doctors Error:', error);
     return fail(res, 500, 'Server error fetching doctors.');

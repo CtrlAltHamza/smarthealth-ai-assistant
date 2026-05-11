@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import {
   Box, Typography, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, Paper, Chip, Button, Alert, CircularProgress,
@@ -42,9 +43,22 @@ const AdminPanel = () => {
   };
 
   return (
-    <Box sx={{ p: 4, minHeight: '100vh' }}>
-      <Typography variant="h3" className="text-gradient" sx={{ mb: 1 }}>Admin Panel</Typography>
-      <Typography color="text.secondary" sx={{ mb: 4 }}>Manage all platform users</Typography>
+    <Box
+      sx={{
+        p: { xs: 2, md: 4 },
+        minHeight: '100vh',
+        background:
+          'radial-gradient(ellipse 60% 40% at 0% 0%, rgba(121,40,202,0.12), transparent), radial-gradient(ellipse 50% 30% at 100% 10%, rgba(0,112,243,0.08), transparent)',
+      }}
+    >
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45 }}>
+        <Typography variant="h3" className="text-gradient" sx={{ mb: 1, fontFamily: 'Outfit', fontWeight: 800 }}>
+          Admin command
+        </Typography>
+        <Typography sx={{ color: 'var(--text-muted)', mb: 4, maxWidth: 560 }}>
+          User directory, operational signals, and quick platform health readouts.
+        </Typography>
+      </motion.div>
 
       {msg && <Alert severity="success" sx={{ mb: 3 }} onClose={() => setMsg('')}>{msg}</Alert>}
 
@@ -141,7 +155,7 @@ const AdminPanel = () => {
                         {u.role === 'Doctor' ? <LocalHospital color="warning" /> : <PersonAdd color="primary" />}
                       </ListItemIcon>
                       <ListItemText 
-                        primary={<Typography sx={{ color: 'white', variant: 'body2' }}>New {u.role} joined</Typography>}
+                        primary={<Typography variant="body2" sx={{ color: 'white' }}>New {u.role} joined</Typography>}
                         secondary={<Typography variant="caption" color="text.secondary">{u.Profile?.firstName} {u.Profile?.lastName} registered</Typography>}
                       />
                     </ListItem>

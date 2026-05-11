@@ -22,7 +22,7 @@ router.post('/analyze', protect as any, requireRole('Patient', 'Doctor', 'Admin'
  *     summary: Predict disease from symptom list using ML model
  *     tags: [Symptoms]
  */
-router.post('/predict', async (req, res) => {
+router.post('/predict', protect as any, requireRole('Patient', 'Doctor', 'Admin') as any, async (req, res) => {
   try {
     const { symptoms } = req.body;
     if (!Array.isArray(symptoms) || symptoms.length === 0) {

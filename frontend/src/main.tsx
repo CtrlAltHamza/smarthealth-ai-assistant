@@ -6,13 +6,16 @@ import { store } from './store';
 import theme from './theme';
 import './index.css';
 import App from './App';
+import { NotificationProvider } from './context/NotificationContext';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <Provider store={store}>
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        <App />
+        <NotificationProvider>
+          <App />
+        </NotificationProvider>
       </ThemeProvider>
     </Provider>
   </StrictMode>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import {
   Box, Typography, Chip,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper,
@@ -46,13 +47,22 @@ const DoctorDashboard = () => {
     .filter(Boolean);
 
   return (
-    <Box sx={{ p: 4, minHeight: '100vh' }}>
-      <Typography variant="h3" className="text-gradient" sx={{ mb: 1 }}>
-        Doctor Dashboard
-      </Typography>
-      <Typography color="text.secondary" sx={{ mb: 4 }}>
-        Welcome, Dr. {user?.firstName}. Manage your patient appointments below.
-      </Typography>
+    <Box
+      sx={{
+        p: { xs: 2, md: 4 },
+        minHeight: '100vh',
+        background:
+          'radial-gradient(ellipse 70% 50% at 100% 0%, rgba(0,112,243,0.1), transparent), radial-gradient(ellipse 50% 40% at 0% 20%, rgba(0,223,216,0.06), transparent)',
+      }}
+    >
+      <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45 }}>
+        <Typography variant="h3" className="text-gradient" sx={{ mb: 1, fontFamily: 'Outfit', fontWeight: 800 }}>
+          Doctor workspace
+        </Typography>
+        <Typography sx={{ color: 'var(--text-muted)', mb: 4, maxWidth: 640 }}>
+          Welcome, Dr. {user?.firstName}. Review bookings, clear your queue, and stay ahead of today&apos;s schedule.
+        </Typography>
+      </motion.div>
 
       <Box sx={{ display: 'flex', gap: 3, mb: 4 }}>
         {['Scheduled', 'Completed', 'Cancelled'].map(s => (

@@ -1,13 +1,16 @@
+import http from 'http';
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import swaggerJsdoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
+import { Server } from 'socket.io';
 import sequelize from './db';
 import { User } from './models/User';
 import { Profile } from './models/Profile';
 import { Appointment } from './models/Appointment';
 import { HealthRecord } from './models/HealthRecord';
+import './models/DoctorReview';
 import authRoutes from './routes/authRoutes';
 import symptomRoutes from './routes/symptomRoutes';
 import appointmentRoutes from './routes/appointmentRoutes';
@@ -75,7 +78,21 @@ const startServer = async () => {
     console.log('Database connected successfully.');
     await sequelize.sync({ alter: DB_SYNC_ALTER });
     console.log('Models synchronized.');
-    app.listen(Number(PORT), '0.0.0.0', () => {
+    const server = http.createServer(app);
+    const io = new Server(server, {
+      cors: { origin: '*', methods: ['GET', 'POST', 'PATCH'] },
+    });
+    app.set('io', io);
+    io.on('connection', (socket) => {
+      socket.on('join_user', (userId: unknown) => {
+        const id = typeof userId === 'number' ? userId : Number(userId);
+        if (Number.isInteger(id) && id > 0) {
+          socket.join(`user:${id}`);
+        }
+      });
+    });
+
+    server.listen(Number(PORT), '0.0.0.0', () => {
       console.log(`Server running on port ${PORT}`);
       console.log(`Swagger docs: http://localhost:${PORT}/api-docs`);
     });

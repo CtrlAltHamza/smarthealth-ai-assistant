@@ -18,8 +18,9 @@ export const analyzeSymptoms = async (req: AuthRequest, res: Response) => {
     }
 
     // Send the symptom text to the Python FastAPI microservice
-    console.log(`Sending request to AI service at ${AI_SERVICE_URL}/analyze-symptoms...`);
-    const aiResponse = await fetch(`${AI_SERVICE_URL}/analyze-symptoms`, {
+    const fullUrl = `${AI_SERVICE_URL}/analyze-symptoms`;
+    console.log(`Sending request to AI service at ${fullUrl}...`);
+    const aiResponse = await fetch(fullUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text }),
@@ -39,7 +40,11 @@ export const analyzeSymptoms = async (req: AuthRequest, res: Response) => {
       patientId,
       reportedSymptoms: aiData.original_text,
       aiAnalysis: aiData.extracted_symptoms,
-      severity: aiData.severity
+      severity: aiData.severity,
+      predictions: aiData.predictions,
+      recommended_specialist: aiData.recommended_specialist,
+      followUpQuestions: aiData.follow_up_questions,
+      matchedKnownSymptoms: aiData.matched_known_symptoms,
     });
 
     return ok(res, {
@@ -47,7 +52,8 @@ export const analyzeSymptoms = async (req: AuthRequest, res: Response) => {
       record: newRecord
     });
   } catch (error: any) {
-    console.error('Symptom Analysis Error Detail:', error.message || error);
+    console.error('Symptom Analysis Error Detail:', error);
+    if (error.cause) console.error('Error Cause:', error.cause);
     return fail(res, 500, 'Error analyzing symptoms', error.message);
   }
 };
