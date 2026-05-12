@@ -94,7 +94,7 @@ export const getPatientAppointments = async (req: AuthRequest, res: Response) =>
           model: User,
           as: 'Doctor',
           attributes: ['id', 'email'],
-          include: [{ model: Profile, attributes: ['firstName', 'lastName'] }],
+          include: [{ model: Profile, as: 'Profile', attributes: ['firstName', 'lastName'] }],
         },
       ],
       order: [['appointmentDate', 'ASC']],
@@ -204,7 +204,7 @@ export const getDoctors = async (_req: Request, res: Response) => {
     const doctors = await User.findAll({
       where: { role: 'Doctor' },
       attributes: ['id', 'email'],
-      include: [{ model: Profile, attributes: ['firstName', 'lastName', 'contactNumber'] }],
+      include: [{ model: Profile, as: 'Profile', attributes: ['firstName', 'lastName', 'contactNumber'] }],
     });
     const ids = doctors.map((d) => d.id);
     if (ids.length === 0) {

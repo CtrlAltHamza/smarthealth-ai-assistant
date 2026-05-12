@@ -22,7 +22,7 @@ export const getDoctorAppointments = async (req: AuthRequest, res: Response) => 
           model: User,
           as: 'Patient',
           attributes: ['id', 'email'],
-          include: [{ model: Profile, attributes: ['firstName', 'lastName', 'contactNumber'] }],
+          include: [{ model: Profile, as: 'Profile', attributes: ['firstName', 'lastName', 'contactNumber'] }],
         },
       ],
       order: [['appointmentDate', 'ASC']],
@@ -60,7 +60,7 @@ export const getAllUsers = async (_req: Request, res: Response) => {
   try {
     const users = await User.findAll({
       attributes: ['id', 'email', 'role', 'createdAt'],
-      include: [{ model: Profile, attributes: ['firstName', 'lastName'] }],
+      include: [{ model: Profile, as: 'Profile', attributes: ['firstName', 'lastName'] }],
       order: [['createdAt', 'DESC']],
     });
     return ok(res, users);
@@ -96,6 +96,7 @@ export const getHealthRecords = async (req: AuthRequest, res: Response) => {
     });
     return ok(res, records);
   } catch (error) {
+    console.error('Error fetching health records:', error);
     return fail(res, 500, 'Error fetching health records.');
   }
 };
